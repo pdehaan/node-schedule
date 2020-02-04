@@ -1,0 +1,29 @@
+{
+  "name": "node-schedule",
+  "description": "Fetch the Node.js release/support schedule.",
+  "version": "1.0.0",
+  "author": "Peter deHaan <peter@deseloper.com> (https://about.me/peterdehaan)",
+  "bin": {
+    "node-schedule": "cli.js"
+  },
+  "bugs": {
+    "url": "https://github.com/pdehaan/node-schedule/issues"
+  },
+  "dependencies": {
+    "axios": "^0.19.2",
+    "bytes": "^3.1.0",
+    "luxon": "^1.22.0"
+  },
+  "devDependencies": {},
+  "homepage": "https://github.com/pdehaan/node-schedule#readme",
+  "keywords": [],
+  "license": "MPL-2.0",
+  "main": "lib.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pdehaan/node-schedule.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
