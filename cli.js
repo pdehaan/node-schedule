@@ -9,6 +9,6 @@ main()
   });
 
 async function main() {
-  const res = await lib.getSchedule();
+  const res = await lib.getSchedule(process.env.NOTES);
   console.log(JSON.stringify(res, null, 2));
 }

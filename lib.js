@@ -1,15 +1,23 @@
+const util = require("util");
+
 const axios = require("axios");
-const bytes = require("bytes");
+const matter = require('gray-matter');
 const {DateTime} = require("luxon");
+const md = require('markdown-it')();
+const $nodeVersionData = require("node-version-data");
 
 const SCHEDULE_URL =
   "https://raw.githubusercontent.com/nodejs/Release/master/schedule.json";
+const nodeVersionData = util.promisify($nodeVersionData);
+
 
 module.exports = {
   getSchedule
 };
 
-async function getSchedule() {
+async function getSchedule(includeBlogPost=false) {
+  const versionData = await nodeVersionData();
+
   const now = Date.now();
   const res = await axios.get(SCHEDULE_URL);
   const versions = Object.entries(res.data)
@@ -26,33 +34,34 @@ async function getSchedule() {
         item.lts = new Date(item.lts);
         item.lts2 = relativeDate(item.lts);
       }
+      item.latest = versionData.find(release => release.version.split(".")[0] === version);
+      if (item.latest) {
+        delete item.latest.files;
+        item.latest.date = new Date(item.latest.date);
+        item.latest.date2 = relativeDate(item.latest.date);
+      }
       return Object.assign({ version }, item);
     })
-    .filter(item => item.start < now && item.end > now);
-  
-  for (const item of versions) {
-    const latest = await getLatestVersion(item.version);
-    latest.file2 = latest.file.match(/^node-(v.*?)\.pkg$/)[1];
-    latest.date = new Date(latest.date);
-    latest.date2 = relativeDate(latest.date);
-    latest.size = Number(latest.size);
-    latest.size2 = bytes(latest.size);
-    item.latest = latest;
+    .filter(item => item.start < now && item.end > now)
+    .reverse();
+
+  if (includeBlogPost) {
+    // Fetch the blog post for any active (non-filtered) releases.
+    for (const release of versions) {
+      release.latest.notes = await fetchReleaseNotes(release.latest.version);
+      release.latest.notes.html = md.render(release.latest.notes.content).replace(/&lt;br&gt;/g, "<br/>");
+    }
   }
   return versions;
 }
 
-async function getLatestVersion(channel) {
-  const uri = `https://nodejs.org/dist/latest-${ channel }.x/`;
-  const res = await axios.get(uri);
-
-  // Pretty gross regex to parse something like the following:
-  // "<a href="node-v12.14.1.pkg">node-v12.14.1.pkg</a>       07-Jan-2020 13:17     19757290"
-  const re = /^<a href=".*?">(?<file>.*?\.pkg)<\/a>\s+(?<date>\d{2}-[a-z]{3}-\d{4}\s\d{2}:\d{2})\s+(?<size>\d+)$/im;
-  const rows = res.data.match(re);
-  return Object.assign({ ...rows.groups }, {uri});
-}
-
 function relativeDate(dateObj) {
   return DateTime.fromJSDate(dateObj).toRelative()
+}
+
+async function fetchReleaseNotes(version) {
+  const uri = `https://raw.githubusercontent.com/nodejs/nodejs.org/master/locale/en/blog/release/${version}.md`;
+  const res = await axios.get(uri);
+  const md = res.data.trim();
+  return matter(md);
 }
