@@ -10,7 +10,7 @@
     "url": "https://github.com/pdehaan/node-schedule/issues"
   },
   "dependencies": {
-    "axios": "^0.19.2",
+    "axios": "^0.21.1",
     "gray-matter": "^4.0.2",
     "luxon": "^1.22.0",
     "markdown-it": "^10.0.0",
